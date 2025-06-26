@@ -214,7 +214,7 @@ def export_to_csv(conn):
         writer.writerows(results)
 
     print(f"[✓] Esportazione CSV completata: {filename}")
-    
+
 def process_ip(ip, rete_nome, conn, cursor):
     if is_device_active(ip):
         mac = get_mac(ip)
@@ -228,6 +228,7 @@ def process_ip(ip, rete_nome, conn, cursor):
 def scan_network():
     conn, cursor = init_db()
     insert_self_device(conn, cursor)
+    delete_old_records(conn, cursor)
     for rete_nome, rete_prefix in RETI.items():
         print(f"\n[🔍] Scansione di {rete_nome} ({rete_prefix}0/24)")
         with ThreadPoolExecutor(max_workers=20) as executor:
@@ -242,6 +243,15 @@ def scan_network():
     cursor.close()
     conn.close()
     print("\n[✅] Scansione completata con successo!")
+
+def delete_old_records(conn, cursor, days=90):
+    """Elimina i dispositivi non più online da oltre X giorni"""
+    cursor.execute("""
+        DELETE FROM scan 
+        WHERE Last_Online < NOW() - INTERVAL %s DAY
+    """, (days,))
+    conn.commit()
+    print(f"[🗑️] Record più vecchi di {days} giorni eliminati dal database.")
 
 if __name__ == "__main__":
     print("""
