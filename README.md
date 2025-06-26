@@ -1,5 +1,23 @@
 # NetworkScan
 
+[![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+
+---
+
+- [NetworkScan](#networkscan)
+  - [🚀 Funzionalità principali](#-funzionalità-principali)
+  - [🛠️ Requisiti](#️-requisiti)
+    - [📦 Dipendenze Python](#-dipendenze-python)
+      - [Contenuto requirenments](#contenuto-requirenments)
+  - [⚙️ Configurazione](#️-configurazione)
+  - [🧪 Esecuzione](#-esecuzione)
+  - [📂 Output](#-output)
+  - [🛡️ Sicurezza](#️-sicurezza)
+  - [📌 Esempi utili](#-esempi-utili)
+  - [🧑‍💻 Autore](#-autore)
+
+---
+
 NetworkAllarm è uno script Python avanzato che effettua una scansione periodica della rete locale, identifica i dispositivi connessi (inclusi quelli IoT silenziosi), e salva le informazioni in un database MySQL e in un file CSV.
 
 ## 🚀 Funzionalità principali
