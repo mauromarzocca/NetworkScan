@@ -187,6 +187,19 @@ def export_to_csv(conn):
     today = datetime.now().strftime("%d-%m-%y")
     os.makedirs("report", exist_ok=True)
     filename = f"report/networkscan_{today}.csv"
+
+    # Pulizia dei file più vecchi di 90 giorni
+    for file in os.listdir("report"):
+        if file.startswith("networkscan_") and file.endswith(".csv"):
+            try:
+                date_str = file.replace("networkscan_", "").replace(".csv", "")
+                file_date = datetime.strptime(date_str, "%d-%m-%y")
+                if (datetime.now() - file_date).days > 90:
+                    os.remove(os.path.join("report", file))
+                    print(f"[🗑️] Rimosso file vecchio: {file}")
+            except ValueError:
+                continue  # Salta file con nomi non conformi
+
     cursor = conn.cursor()
     cursor.execute("""
         SELECT Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN 
@@ -194,12 +207,14 @@ def export_to_csv(conn):
         ORDER BY INET_ATON(IP)
     """)
     results = cursor.fetchall()
+
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Nome', 'IP', 'MAC_ADDRESS', 'Last_Online', 'Proprietario', 'Rete', 'VPN'])
         writer.writerows(results)
-    print(f"[✓] Esportazione CSV completata: {filename}")
 
+    print(f"[✓] Esportazione CSV completata: {filename}")
+    
 def process_ip(ip, rete_nome, conn, cursor):
     if is_device_active(ip):
         mac = get_mac(ip)
