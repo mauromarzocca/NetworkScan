@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 1.3
+- Versione: 1.4
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -119,6 +119,7 @@ WHERE IP = '192.168.1.X';
 - Versione 1.1 : Introdotta pulizia dei file CSV più vecchi di 90 giorni
 - Versione 1.2 : Introdotta pulizia dal DB dei dispositivi più vecchi di 90 giorni
 - Versione 1.3 : Introdotto script di Backup
+- Versione 1.4 : Introdotto script di Restore
 
 ## 🧑‍💻 Autore
 
