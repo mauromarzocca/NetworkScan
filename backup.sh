@@ -4,7 +4,7 @@
 
 # 📂 Cartella del progetto da zippare
 FOLDER="path/to/your/project"
-BACKUP_DIR="$(dirname "$FOLDER")/backup"
+BACKUP_DIR="$(dirname "$FOLDER")/backup_networkscan"
 
 # 📅 Data odierna
 DATE=$(date +"%d-%m-%y")
@@ -14,7 +14,7 @@ SQL_FILE="scan_backup_${DATE}.sql"
 # 🗃️ MySQL
 DB_NAME="DB"
 DB_USER="user"
-DB_PASS="passeword"
+DB_PASS="password"
 TABLE_NAME="scan"
 
 # 🎯 Server remoto
