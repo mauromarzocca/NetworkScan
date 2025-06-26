@@ -1,5 +1,7 @@
 # NetworkScan
 
+- Versione: 1.0
+
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
 ---
@@ -14,6 +16,7 @@
   - [📂 Output](#-output)
   - [🛡️ Sicurezza](#️-sicurezza)
   - [📌 Esempi utili](#-esempi-utili)
+  - [Changelog](#changelog)
   - [🧑‍💻 Autore](#-autore)
 
 ---
@@ -106,6 +109,10 @@ SET Nome = 'Echo Dot Soggiorno',
     Proprietario = 'Utente'
 WHERE IP = '192.168.1.X';
 ```
+
+## Changelog
+
+- Versione 1.0 : Build Iniziale
 
 ## 🧑‍💻 Autore
 
