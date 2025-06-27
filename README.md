@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 1.8.1
+- Versione: 1.8.2
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -26,6 +26,8 @@
   - [🧑‍💻 Autore](#-autore)
 
 ---
+
+![icon](icon.png)
 
 NetworkScan è uno script Python avanzato che effettua una scansione periodica della rete locale, identifica i dispositivi connessi (inclusi quelli IoT silenziosi), e salva le informazioni in un database MySQL e in un file CSV.
 
@@ -175,6 +177,7 @@ WHERE IP = '192.168.1.X';
 - Versione 1.7 : Migliorato il riconoscimento dei dispositivi IoT
 - Versione 1.8 : Migliorato CSV
 - Versione 1.8.1 : Migliorata Documentazione
+- Versione 1.8.2 : Creazione dell'icona
 
 ## 🧑‍💻 Autore
 
