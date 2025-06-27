@@ -5,7 +5,7 @@
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge&logo=github)](#)
+![Build Status](https://img.shields.io/badge/Build-Passing-brightgreen?style=for-the-badge&logo=github)
 
 ---
 
@@ -216,7 +216,6 @@ Si consiglia di non lanciare lo script più volte consecutivamente, poichè potr
 ```
 
 Poichè un output imprevisto da comandi di sistema (es. arp, ping) può non essere gestito bene da re.search() o da subprocess.check_output(), soprattutto se si lavora in più thread.
-
 
 ## Changelog
 
