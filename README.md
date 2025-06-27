@@ -156,13 +156,19 @@ sudo /path/to/venv/bin/python network_scanner.py
 
 ## 📌 Esempi utili
 
-Aggiornare un nome e proprietario in MySQL:
+- Aggiornare un nome e proprietario in MySQL:
 
 ```bash
 UPDATE scan
 SET Nome = 'Echo Dot Soggiorno',
     Proprietario = 'Utente'
 WHERE IP = '192.168.1.X';
+```
+
+- Cancellare un dispositivo
+
+```bash
+DELETE FROM scan WHERE IP = '192.168.1.X';
 ```
 
 ## Changelog
