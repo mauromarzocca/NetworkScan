@@ -25,7 +25,7 @@ SCAN_PORTS = [80, 443, 8080, 6666, 8888]  # Include porte Tuya/SmartLife
 ARP_TIMEOUT = 2
 
 DB_CONFIG = {
-    'user': 'user',
+    'user': 'username',
     'password': 'password',
     'host': 'localhost',
     'database': 'DB'
@@ -182,7 +182,8 @@ def export_to_csv(conn):
     """)
     results = cursor.fetchall()
     with open(filename, mode='w', newline='') as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, delimiter=';')
+        writer.writerow(['sep=;'])
         writer.writerow(['Nome', 'IP', 'MAC_ADDRESS', 'Last_Online', 'Proprietario', 'Rete', 'VPN'])
         writer.writerows(results)
     print(f"[✓] Esportazione CSV completata: {filename}")
