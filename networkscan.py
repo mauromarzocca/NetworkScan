@@ -150,24 +150,28 @@ def insert_or_update(cursor, nome, ip, mac, rete):
         """, (nome, ip, mac, now, rete))
 
 def insert_self_device(cursor):
+    """Inserisce il dispositivo corrente nel database"""
     interfaces = get_selected_local_interfaces()
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     base_hostname = socket.gethostname()
+
     for iface, ip, mac in interfaces:
+        mac = mac.upper()  # 🔹 forza MAC in maiuscolo
         nome = f"{base_hostname} ({iface})"
         rete = get_rete_da_ip(ip)
-        old_ip = record_exists(cursor, mac)
-        if old_ip:
+
+        if record_exists(cursor, mac):
             cursor.execute("""
                 UPDATE scan 
-                SET IP = %s, Last_Online = %s, Rete = %s, Nome = %s
+                SET IP = %s, Last_Online = %s, Rete = %s 
                 WHERE MAC_ADDRESS = %s
-            """, (ip, now, rete, nome, mac))
+            """, (ip, now, rete, mac))
         else:
             cursor.execute("""
                 INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete)
                 VALUES (%s, %s, %s, %s, NULL, %s)
             """, (nome, ip, mac, now, rete))
+
         print(f"[✓] Interfaccia registrata: {nome} - {ip} - {mac} in {rete}")
 
 def export_to_csv(conn):
