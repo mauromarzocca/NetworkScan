@@ -253,9 +253,9 @@ def handle_sigsegv(signum, frame):
 
 if __name__ == "__main__":
     print("""
-    #######################################
-    # Scanner di Rete per Dispositivi IoT #
-    #######################################
+    ###################
+    # Scanner di Rete #
+    ###################
     """)
     signal.signal(signal.SIGSEGV, handle_sigsegv)
     if os.geteuid() != 0:
