@@ -182,7 +182,7 @@ sudo /path/to/venv/bin/python network_scanner.py
 ## 📂 Output
 
 - 🗃️ Database: tabella scan nel database NetworkScan, con:
-- Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN (boolean)
+  - Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN
 - 📄 CSV: file generato in report/networkscan_<GG-MM-AA>.csv, sovrascritto ogni giorno.
 
 ## 🛡️ Sicurezza
