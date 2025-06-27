@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 1.6
+- Versione: 1.7
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -153,6 +153,7 @@ WHERE IP = '192.168.1.X';
 - Versione 1.4 : Introdotto script di Restore
 - Versione 1.5 : Miglioramenti Generali
 - Versione 1.6 : Ottimizzazione del Codice
+- Versione 1.7 : Migliorato il riconoscimento dei dispositivi IoT
 
 ## 🧑‍💻 Autore
 
