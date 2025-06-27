@@ -234,7 +234,6 @@ Poichè un output imprevisto da comandi di sistema (es. arp, ping) può non esse
 - Versione 1.9 : Creazione di uno script per automatizzare lo scan.
 - Versione 1.9.1 : Miglioramenti Generali
 
-
 ## 🧑‍💻 Autore
 
 Mauro Marzocca
