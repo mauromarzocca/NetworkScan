@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 1.8.2
+- Versione: 1.9
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -19,6 +19,7 @@
       - [Contenuto requirenments](#contenuto-requirenments)
   - [⚙️ Configurazione](#️-configurazione)
     - [Esempio crontab](#esempio-crontab)
+      - [Script](#script)
   - [🧪 Esecuzione](#-esecuzione)
   - [📂 Output](#-output)
   - [🛡️ Sicurezza](#️-sicurezza)
@@ -142,6 +143,27 @@ sudo crontab -e
 
 Questa permette di essere eseguito ogni due ore a partire da mezzanotte.
 
+#### Script
+
+É presente uno script dove occorre modificare solo il path.
+Occorre renderlo eseguibile tramite il comando:
+
+```bash
+chmod +x /home/mauromarzocca/Project/Python/Scan/launch_scan.sh
+```
+
+Inserire nel crontab
+
+```bash
+sudo crontab -e
+```
+
+La seguente riga:
+
+```bash
+0 */2 * * * /home/mauromarzocca/Project/Python/Scan/launch_scan.sh
+```
+
 ## 🧪 Esecuzione
 
 Lo script deve essere eseguito come root:
@@ -197,6 +219,7 @@ DELETE FROM scan WHERE IP = '192.168.1.X';
 - Versione 1.8 : Migliorato CSV
 - Versione 1.8.1 : Migliorata Documentazione
 - Versione 1.8.2 : Creazione dell'icona
+- Versione 1.9 : Creazione di uno script per automatizzare lo scan.
 
 ## 🧑‍💻 Autore
 
