@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 1.8
+- Versione: 1.8.1
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -17,6 +17,7 @@
     - [📦 Dipendenze Python](#-dipendenze-python)
       - [Contenuto requirenments](#contenuto-requirenments)
   - [⚙️ Configurazione](#️-configurazione)
+    - [Esempio crontab](#esempio-crontab)
   - [🧪 Esecuzione](#-esecuzione)
   - [📂 Output](#-output)
   - [🛡️ Sicurezza](#️-sicurezza)
@@ -108,6 +109,24 @@ DB_CONFIG = {
 }
 ```
 
+### Esempio crontab
+
+Per avviarlo ogni due ore occorre
+
+- Eseguire il crontab da sudo
+
+```bash
+sudo crontab -e
+```
+
+- Incollare la seguente riga:
+
+```bash
+0 */2 * * * /bin/bash -c 'echo "[📅] $(date "+%Y-%m-%d %H:%M:%S") Avvio scansione" >> /path/network_scan.log && /venv/bin/python /path/networkscan.py >> /path/network_scan.log 2>&1'
+```
+
+Questa permette di essere eseguito ogni due ore a partire da mezzanotte.
+
 ## 🧪 Esecuzione
 
 Lo script deve essere eseguito come root:
@@ -155,6 +174,7 @@ WHERE IP = '192.168.1.X';
 - Versione 1.6 : Ottimizzazione del Codice
 - Versione 1.7 : Migliorato il riconoscimento dei dispositivi IoT
 - Versione 1.8 : Migliorato CSV
+- Versione 1.8.1 : Migliorata Documentazione
 
 ## 🧑‍💻 Autore
 
