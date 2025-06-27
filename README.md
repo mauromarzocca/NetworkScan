@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 1.4
+- Versione: 1.5
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -12,6 +12,7 @@
 - [NetworkScan](#networkscan)
   - [🚀 Funzionalità principali](#-funzionalità-principali)
   - [🛠️ Requisiti](#️-requisiti)
+    - [Dipendenza dei Pacchetti](#dipendenza-dei-pacchetti)
     - [📦 Dipendenze Python](#-dipendenze-python)
       - [Contenuto requirenments](#contenuto-requirenments)
   - [⚙️ Configurazione](#️-configurazione)
@@ -44,6 +45,31 @@ NetworkAllarm è uno script Python avanzato che effettua una scansione periodica
 
 - Python 3.7+
 - Permessi di root (necessari per `scapy`, `arp`, accesso raw socket)
+
+### Dipendenza dei Pacchetti
+
+Occorre installare i seguenti pacchetti:
+
+```bash
+sudo apt update
+sudo apt install -y \
+  python3 \
+  python3-pip \
+  python3-venv \
+  python3-mysqldb \
+  net-tools \
+  zip \
+  unzip \
+  mysql-client \
+  iputils-ping \
+  openssh-client
+```
+
+Se usi il virtualenv, puoi anche aggiungere:
+
+```bash
+pip install mysql-connector-python netifaces
+```
 
 ### 📦 Dipendenze Python
 
@@ -120,6 +146,7 @@ WHERE IP = '192.168.1.X';
 - Versione 1.2 : Introdotta pulizia dal DB dei dispositivi più vecchi di 90 giorni
 - Versione 1.3 : Introdotto script di Backup
 - Versione 1.4 : Introdotto script di Restore
+- Versioni 1.5 : Miglioramenti Generali
 
 ## 🧑‍💻 Autore
 
