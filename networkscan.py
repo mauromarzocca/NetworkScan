@@ -1,20 +1,21 @@
 import subprocess
 import socket
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, timedelta
 import re
 import netifaces
 import csv
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
-from scapy.all import ARP, Ether, srp, conf
+import signal
+import sys
 
 # ========================
 # ⚙️ CONFIGURAZIONE
 # ========================
 RETI = {
-    "Newtork": "192.168.1.",
+    "Network": "192.168.1.",
 }
 
 INTERVALLO = range(1, 255)
@@ -23,32 +24,17 @@ SCAN_PORTS = [80, 443, 8080]
 ARP_TIMEOUT = 2
 
 DB_CONFIG = {
-    'user': 'user',
+    'user': 'username',
     'password': 'password',
     'host': 'localhost',
     'database': 'DB'
-}
-
-RETE_INTERFACE_MAP = {
-    "192.168.1.": "eth0",
 }
 
 # ========================
 # 🔧 FUNZIONI DI SUPPORTO
 # ========================
 
-def get_mac_scapy(ip, iface):
-    conf.verb = 0
-    pkt = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)
-    try:
-        ans, _ = srp(pkt, iface=iface, timeout=2, retry=2, verbose=0)
-        for _, received in ans:
-            return received.hwsrc.upper()
-    except Exception as e:
-        print(f"[!] Errore scapy ARP per {ip} su {iface}: {e}")
-    return None
-
-def get_mac_fallback(ip):
+def get_mac(ip):
     try:
         subprocess.run(["arp", "-d", ip], stderr=subprocess.DEVNULL)
         subprocess.run(["ping", "-c", "1", "-W", "1", ip], stdout=subprocess.DEVNULL)
@@ -58,17 +44,6 @@ def get_mac_fallback(ip):
         return mac.group(0).upper() if mac else None
     except Exception:
         return None
-
-def get_mac(ip):
-    iface = None
-    for prefix, inter in RETE_INTERFACE_MAP.items():
-        if ip.startswith(prefix):
-            iface = inter
-            break
-    if not iface:
-        iface = INTERFACCE_CONSIDERATE[0]
-    mac = get_mac_scapy(ip, iface)
-    return mac if mac else get_mac_fallback(ip)
 
 def scan_port(ip, port):
     try:
@@ -80,31 +55,14 @@ def scan_port(ip, port):
         return False
 
 def is_device_active(ip):
-    ping_result = subprocess.run(['ping', '-c', '1', '-W', '1', ip],
-                                 stdout=subprocess.DEVNULL,
-                                 stderr=subprocess.DEVNULL)
-    if ping_result.returncode == 0:
-        return True
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        if any(executor.map(lambda p: scan_port(ip, p), SCAN_PORTS)):
-            return True
-    mac = get_mac(ip)
-    return mac and mac != "00:00:00:00:00:00"
+    result = subprocess.run(['ping', '-c', '1', '-W', '1', ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return result.returncode == 0
 
 def get_hostname(ip):
     try:
         return socket.gethostbyaddr(ip)[0]
     except (socket.herror, socket.timeout):
-        try:
-            nbns = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            nbns.settimeout(1)
-            nbns.sendto(b'\x00', (ip, 137))
-            data, _ = nbns.recvfrom(1024)
-            if data:
-                return data[57:].split(b'\x00')[0].decode('ascii', errors='ignore')
-        except:
-            return "Sconosciuto"
-    return "Sconosciuto"
+        return "Sconosciuto"
 
 def get_selected_local_interfaces():
     interfaces = []
@@ -113,8 +71,10 @@ def get_selected_local_interfaces():
             continue
         if_addresses = netifaces.ifaddresses(iface)
         if netifaces.AF_INET in if_addresses and netifaces.AF_LINK in if_addresses:
-            ip = if_addresses[netifaces.AF_INET][0].get('addr')
-            mac = if_addresses[netifaces.AF_LINK][0].get('addr')
+            ip_info = if_addresses[netifaces.AF_INET][0]
+            mac_info = if_addresses[netifaces.AF_LINK][0]
+            ip = ip_info.get('addr')
+            mac = mac_info.get('addr')
             if ip and mac and not ip.startswith("127."):
                 interfaces.append((iface, ip, mac))
     return interfaces
@@ -144,62 +104,66 @@ def init_db():
     return conn, cursor
 
 def record_exists(cursor, mac):
-    cursor.execute("SELECT COUNT(*) FROM scan WHERE MAC_ADDRESS = %s", (mac,))
-    return cursor.fetchone()[0] > 0
+    cursor.execute("SELECT IP FROM scan WHERE MAC_ADDRESS = %s", (mac,))
+    result = cursor.fetchone()
+    return result[0] if result else None
 
-def insert_or_update(conn, cursor, nome, ip, mac, rete):
+def insert_or_update(cursor, nome, ip, mac, rete):
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    if record_exists(cursor, mac):
-        cursor.execute("""
-            UPDATE scan 
-            SET IP = %s, Last_Online = %s, Rete = %s 
-            WHERE MAC_ADDRESS = %s
-        """, (ip, now, rete, mac))
+    if not mac or mac == "00:00:00:00:00:00":
+        print(f"[!] MAC non valido per {ip}, salto.")
+        return
+    old_ip = record_exists(cursor, mac)
+    if old_ip and old_ip != ip:
+        print(f"[⚠️] IP cambiato per {mac}: da {old_ip} a {ip}")
+        if is_device_active(old_ip):
+            ip = old_ip
+    if old_ip:
+        cursor.execute("SELECT Nome FROM scan WHERE MAC_ADDRESS = %s", (mac,))
+        existing_nome = cursor.fetchone()[0] or ""
+        if existing_nome.strip().lower() in ["", "sconosciuto"] and nome.lower() != "sconosciuto":
+            cursor.execute("""
+                UPDATE scan 
+                SET IP = %s, Last_Online = %s, Rete = %s, Nome = %s
+                WHERE MAC_ADDRESS = %s
+            """, (ip, now, rete, nome, mac))
+        else:
+            cursor.execute("""
+                UPDATE scan 
+                SET IP = %s, Last_Online = %s, Rete = %s
+                WHERE MAC_ADDRESS = %s
+            """, (ip, now, rete, mac))
     else:
         cursor.execute("""
-            INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN)
-            VALUES (%s, %s, %s, %s, NULL, %s, FALSE)
+            INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete)
+            VALUES (%s, %s, %s, %s, NULL, %s)
         """, (nome, ip, mac, now, rete))
-    conn.commit()
 
-def insert_self_device(conn, cursor):
+def insert_self_device(cursor):
     interfaces = get_selected_local_interfaces()
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     base_hostname = socket.gethostname()
     for iface, ip, mac in interfaces:
         nome = f"{base_hostname} ({iface})"
         rete = get_rete_da_ip(ip)
-        if record_exists(cursor, mac):
+        old_ip = record_exists(cursor, mac)
+        if old_ip:
             cursor.execute("""
                 UPDATE scan 
-                SET IP = %s, Last_Online = %s, Rete = %s 
+                SET IP = %s, Last_Online = %s, Rete = %s, Nome = %s
                 WHERE MAC_ADDRESS = %s
-            """, (ip, now, rete, mac))
+            """, (ip, now, rete, nome, mac))
         else:
             cursor.execute("""
-                INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN)
-                VALUES (%s, %s, %s, %s, NULL, %s, FALSE)
+                INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete)
+                VALUES (%s, %s, %s, %s, NULL, %s)
             """, (nome, ip, mac, now, rete))
-        conn.commit()
         print(f"[✓] Interfaccia registrata: {nome} - {ip} - {mac} in {rete}")
 
 def export_to_csv(conn):
     today = datetime.now().strftime("%d-%m-%y")
     os.makedirs("report", exist_ok=True)
     filename = f"report/networkscan_{today}.csv"
-
-    # Pulizia dei file più vecchi di 90 giorni
-    for file in os.listdir("report"):
-        if file.startswith("networkscan_") and file.endswith(".csv"):
-            try:
-                date_str = file.replace("networkscan_", "").replace(".csv", "")
-                file_date = datetime.strptime(date_str, "%d-%m-%y")
-                if (datetime.now() - file_date).days > 90:
-                    os.remove(os.path.join("report", file))
-                    print(f"[🗑️] Rimosso file vecchio: {file}")
-            except ValueError:
-                continue  # Salta file con nomi non conformi
-
     cursor = conn.cursor()
     cursor.execute("""
         SELECT Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN 
@@ -207,51 +171,56 @@ def export_to_csv(conn):
         ORDER BY INET_ATON(IP)
     """)
     results = cursor.fetchall()
-
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Nome', 'IP', 'MAC_ADDRESS', 'Last_Online', 'Proprietario', 'Rete', 'VPN'])
         writer.writerows(results)
-
     print(f"[✓] Esportazione CSV completata: {filename}")
+    now = time.time()
+    for f in os.listdir("report"):
+        path = os.path.join("report", f)
+        if os.path.isfile(path) and path.endswith(".csv") and now - os.path.getmtime(path) > 90 * 86400:
+            os.remove(path)
+            print(f"[🗑️] Rimosso CSV vecchio: {f}")
 
-def process_ip(ip, rete_nome, conn, cursor):
-    if is_device_active(ip):
-        mac = get_mac(ip)
-        if mac:
-            nome = get_hostname(ip)
-            insert_or_update(conn, cursor, nome, ip, mac, rete_nome)
-            print(f"[+] Trovato: {ip} ({mac}) - {nome}")
-        else:
-            print(f"[!] Dispositivo attivo ma MAC non rilevato: {ip}")
+# ========================
+# 🔍 FUNZIONE PRINCIPALE
+# ========================
 
 def scan_network():
     conn, cursor = init_db()
-    insert_self_device(conn, cursor)
-    delete_old_records(conn, cursor)
+    insert_self_device(cursor)
     for rete_nome, rete_prefix in RETI.items():
         print(f"\n[🔍] Scansione di {rete_nome} ({rete_prefix}0/24)")
-        with ThreadPoolExecutor(max_workers=20) as executor:
-            futures = [
-                executor.submit(process_ip, f"{rete_prefix}{i}", rete_nome, conn, cursor)
-                for i in INTERVALLO
-            ]
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = []
+            for i in INTERVALLO:
+                ip = rete_prefix + str(i)
+                futures.append(executor.submit(process_ip, ip, rete_nome, cursor))
             for future in futures:
                 future.result()
+    cursor.execute("DELETE FROM scan WHERE Last_Online < %s", (datetime.now() - timedelta(days=90),))
     conn.commit()
     export_to_csv(conn)
     cursor.close()
     conn.close()
     print("\n[✅] Scansione completata con successo!")
 
-def delete_old_records(conn, cursor, days=90):
-    """Elimina i dispositivi non più online da oltre X giorni"""
-    cursor.execute("""
-        DELETE FROM scan 
-        WHERE Last_Online < NOW() - INTERVAL %s DAY
-    """, (days,))
-    conn.commit()
-    print(f"[🗑️] Record più vecchi di {days} giorni eliminati dal database.")
+def process_ip(ip, rete_nome, cursor):
+    if is_device_active(ip):
+        mac = get_mac(ip)
+        if mac:
+            nome = get_hostname(ip)
+            insert_or_update(cursor, nome, ip, mac, rete_nome)
+            print(f"[+] Trovato: {ip} ({mac}) - {nome}")
+
+# ========================
+# ▶️ AVVIO SCRIPT
+# ========================
+
+def handle_sigsegv(signum, frame):
+    print("[❌] Segmentation fault rilevato. Uscita protetta.")
+    sys.exit(1)
 
 if __name__ == "__main__":
     print("""
@@ -259,8 +228,8 @@ if __name__ == "__main__":
     # Scanner di Rete #
     ###################
     """)
+    signal.signal(signal.SIGSEGV, handle_sigsegv)
     if os.geteuid() != 0:
-        print("[!] Attenzione: Lo script richiede privilegi root per funzionare correttamente.")
-        print("[!] Per favore esegui con sudo.")
+        print("[!] Lo script richiede privilegi root. Esegui con sudo.")
         exit(1)
     scan_network()
