@@ -10,6 +10,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 import signal
 import sys
+from scapy.all import sniff, UDP, Ether, IP
 
 # ========================
 # ⚙️ CONFIGURAZIONE
@@ -20,11 +21,11 @@ RETI = {
 
 INTERVALLO = range(1, 255)
 INTERFACCE_CONSIDERATE = ["eth0", "wlan0"]
-SCAN_PORTS = [80, 443, 8080]
+SCAN_PORTS = [80, 443, 8080, 6666, 8888]  # Include porte Tuya/SmartLife
 ARP_TIMEOUT = 2
 
 DB_CONFIG = {
-    'user': 'username',
+    'user': 'user',
     'password': 'password',
     'host': 'localhost',
     'database': 'DB'
@@ -55,8 +56,17 @@ def scan_port(ip, port):
         return False
 
 def is_device_active(ip):
-    result = subprocess.run(['ping', '-c', '1', '-W', '1', ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    return result.returncode == 0
+    ping_result = subprocess.run(['ping', '-c', '1', '-W', '1', ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if ping_result.returncode == 0:
+        return True
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        results = list(executor.map(lambda p: scan_port(ip, p), SCAN_PORTS))
+        if any(results):
+            return True
+    mac = get_mac(ip)
+    if mac and mac != "00:00:00:00:00:00":
+        return True
+    return False
 
 def get_hostname(ip):
     try:
@@ -183,6 +193,18 @@ def export_to_csv(conn):
             os.remove(path)
             print(f"[🗑️] Rimosso CSV vecchio: {f}")
 
+def passive_sniff_udp(timeout=10):
+    print("[🛰️] Avvio sniffing passivo UDP...")
+    seen = {}
+    def packet_callback(pkt):
+        if pkt.haslayer(UDP) and pkt.haslayer(IP) and pkt.haslayer(Ether):
+            mac = pkt[Ether].src.upper()
+            ip = pkt[IP].src
+            if mac not in seen:
+                seen[mac] = ip
+    sniff(iface="wlan0", prn=packet_callback, store=False, timeout=timeout)
+    return seen
+
 # ========================
 # 🔍 FUNZIONE PRINCIPALE
 # ========================
@@ -192,13 +214,20 @@ def scan_network():
     insert_self_device(cursor)
     for rete_nome, rete_prefix in RETI.items():
         print(f"\n[🔍] Scansione di {rete_nome} ({rete_prefix}0/24)")
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=20) as executor:
             futures = []
             for i in INTERVALLO:
                 ip = rete_prefix + str(i)
                 futures.append(executor.submit(process_ip, ip, rete_nome, cursor))
             for future in futures:
                 future.result()
+    # Sniff passivo per dispositivi silenziosi
+    passive_devices = passive_sniff_udp(10)
+    for mac, ip in passive_devices.items():
+        if not record_exists(cursor, mac):
+            rete = get_rete_da_ip(ip)
+            insert_or_update(cursor, "Dispositivo Passivo", ip, mac, rete)
+            print(f"[📡] Dispositivo passivo rilevato: {ip} ({mac})")
     cursor.execute("DELETE FROM scan WHERE Last_Online < %s", (datetime.now() - timedelta(days=90),))
     conn.commit()
     export_to_csv(conn)
@@ -224,9 +253,9 @@ def handle_sigsegv(signum, frame):
 
 if __name__ == "__main__":
     print("""
-    ###################
-    # Scanner di Rete #
-    ###################
+    #######################################
+    # Scanner di Rete per Dispositivi IoT #
+    #######################################
     """)
     signal.signal(signal.SIGSEGV, handle_sigsegv)
     if os.geteuid() != 0:
