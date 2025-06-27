@@ -11,6 +11,7 @@
 
 - [NetworkScan](#networkscan)
   - [🚀 Funzionalità principali](#-funzionalità-principali)
+    - [Testing](#testing)
   - [🛠️ Requisiti](#️-requisiti)
     - [Dipendenza dei Pacchetti](#dipendenza-dei-pacchetti)
     - [📦 Dipendenze Python](#-dipendenze-python)
@@ -25,7 +26,7 @@
 
 ---
 
-NetworkAllarm è uno script Python avanzato che effettua una scansione periodica della rete locale, identifica i dispositivi connessi (inclusi quelli IoT silenziosi), e salva le informazioni in un database MySQL e in un file CSV.
+NetworkScan è uno script Python avanzato che effettua una scansione periodica della rete locale, identifica i dispositivi connessi (inclusi quelli IoT silenziosi), e salva le informazioni in un database MySQL e in un file CSV.
 
 ## 🚀 Funzionalità principali
 
@@ -40,6 +41,10 @@ NetworkAllarm è uno script Python avanzato che effettua una scansione periodica
 - Supporto multi-interfaccia (`eth0`, `wlan0`, ecc.)
 - Aggiunta automatica del dispositivo locale allo scan
 - Compatibile con Raspberry Pi, server Linux, Ubuntu
+
+### Testing
+
+NetworkScan è stato testato con Raspberry Pi 4 con Ubuntu Server.
 
 ## 🛠️ Requisiti
 
@@ -119,7 +124,7 @@ sudo /path/to/venv/bin/python network_scanner.py
 
 ## 📂 Output
 
-- 🗃️ Database: tabella scan nel database NetworkAllarm, con:
+- 🗃️ Database: tabella scan nel database NetworkScan, con:
 - Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN (boolean)
 - 📄 CSV: file generato in report/networkscan_<GG-MM-AA>.csv, sovrascritto ogni giorno.
 
