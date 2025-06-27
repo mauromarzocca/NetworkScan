@@ -12,6 +12,7 @@
 - [NetworkScan](#networkscan)
   - [🚀 Funzionalità principali](#-funzionalità-principali)
     - [Testing](#testing)
+  - [Composizione Database](#composizione-database)
   - [🛠️ Requisiti](#️-requisiti)
     - [Dipendenza dei Pacchetti](#dipendenza-dei-pacchetti)
     - [📦 Dipendenze Python](#-dipendenze-python)
@@ -48,6 +49,18 @@ NetworkScan è uno script Python avanzato che effettua una scansione periodica d
 ### Testing
 
 NetworkScan è stato testato con Raspberry Pi 4 con Ubuntu Server.
+
+## Composizione Database
+
+La tabella 'Scan' è così composta:
+
+- Nome : VARCHAR(255)
+- IP : VARCHAR(15)
+- MAC_ADDRESS : VARCHAR(17) PRIMARY KEY -> In quanto univoca per ogni dispositivo
+- Last_Online : DATETIME
+- Proprietario : VARCHAR(255)
+- Rete : VARCHAR(50)
+- VPN : Boolean -> Di default è false
 
 ## 🛠️ Requisiti
 
