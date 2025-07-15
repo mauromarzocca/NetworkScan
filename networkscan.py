@@ -172,8 +172,10 @@ def insert_self_device(cursor):
 
 def export_to_csv(conn):
     today = datetime.now().strftime("%d-%m-%y")
-    os.makedirs("report", exist_ok=True)
-    filename = f"report/networkscan_{today}.csv"
+    REPORT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "report")
+    os.makedirs(REPORT_DIR, exist_ok=True)
+    filename = os.path.join(REPORT_DIR, f"networkscan_{today}.csv")
+
     cursor = conn.cursor()
     cursor.execute("""
         SELECT Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN 
