@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 2.1
+- Versione: 2.1.1
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -234,6 +234,7 @@ Poichè un output imprevisto da comandi di sistema (es. arp, ping) può non esse
 - Versione 1.9.1 : Miglioramenti Generali
 - Versione 2.0 : Revisione e Ottimizzazione del codice
 - Versione 2.1 : Ottimizazzione del codice
+- Versione 2.1.1 : Migliorato lo script di Backup
 
 ## 🧑‍💻 Autore
 
