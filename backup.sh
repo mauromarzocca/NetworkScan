@@ -46,3 +46,9 @@ else
     echo "[❌] Errore durante l'invio via SCP"
     exit 1
 fi
+
+# 🧹 Rimuovi tutti i file .sql più vecchi di 1 giorno dalla cartella del progetto
+find "$FOLDER" -maxdepth 1 -type f -name "scan_backup_*.sql" -mtime +0 -exec rm {} \;
+
+# 🧹 Cancella i backup più vecchi di 7 giorni
+find "$BACKUP_DIR" -type f -name "*.zip" -mtime +7 -exec rm {} \;
