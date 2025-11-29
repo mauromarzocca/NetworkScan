@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 2.2.1
+- Versione: 3.0
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -16,7 +16,7 @@
   - [🛠️ Requisiti](#️-requisiti)
     - [Dipendenza dei Pacchetti](#dipendenza-dei-pacchetti)
     - [📦 Dipendenze Python](#-dipendenze-python)
-      - [Contenuto requirenments](#contenuto-requirenments)
+      - [Contenuto requirements](#contenuto-requirements)
   - [⚙️ Configurazione](#️-configurazione)
     - [Esempio crontab](#esempio-crontab)
       - [Script](#script)
@@ -102,7 +102,7 @@ Installa le dipendenze con:
 pip install -r requirements.txt
 ```
 
-#### Contenuto requirenments
+#### Contenuto requirements
 
 mysql-connector-python
 netifaces
@@ -233,10 +233,11 @@ Poichè un output imprevisto da comandi di sistema (es. arp, ping) può non esse
 - Versione 1.9 : Creazione di uno script per automatizzare lo scan.
 - Versione 1.9.1 : Miglioramenti Generali
 - Versione 2.0 : Revisione e Ottimizzazione del codice
-- Versione 2.1 : Ottimizazzione del codice
+- Versione 2.1 : Ottimizzazione del codice
 - Versione 2.1.1 : Migliorato lo script di Backup
 - Versione 2.2 : Miglioramento generale del codice
 - Versione 2.2.1 : Migliorato lo script di Launch
+- Versione 3.0 : Rielaborazione della Build, ottimizzazzione del codice e miglioramento della gestione del backup e del Database.
 
 ## 🧑‍💻 Autore
 
