@@ -68,3 +68,13 @@ find "$FOLDER" -maxdepth 1 -type f -name "scan_backup_*.sql" -mtime +7 -exec rm 
 # 🧹 Cancella i backup ZIP più vecchi di 30 giorni (aumentato prudenzialmente)
 echo "[🧹] Pulizia vecchi file ZIP..."
 find "$BACKUP_DIR" -type f -name "*.zip" -mtime +30 -exec rm -v {} \;
+
+# 🧹 Pulizia file CSV più vecchi di 7 giorni nella cartella report
+REPORT_DIR="$FOLDER/report"
+
+if [ -d "$REPORT_DIR" ]; then
+    echo "[🧹] Pulizia file CSV più vecchi di 7 giorni in report/..."
+    find "$REPORT_DIR" -type f -name "*.csv" -mtime +7 -exec rm -v {} \;
+else
+    echo "[⚠️] Cartella report non trovata, skip pulizia CSV."
+fi
