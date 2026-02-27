@@ -24,6 +24,11 @@ RETI = {
 INTERVALLO = range(1, 255)
 INTERFACCE_CONSIDERATE = ["eth0", "wlan0"]
 SCAN_PORTS = [80, 443, 8080, 6666, 8888]  # Include porte Tuya/SmartLife
+# Extended port list for perform_port_scan
+EXTENDED_PORTS = [
+    21, 22, 23, 25, 53, 80, 110, 139, 143, 443, 445, 
+    993, 995, 3306, 3389, 5900, 6666, 8080, 8888
+]
 ARP_TIMEOUT = 2
 db_lock = threading.Lock()
 
@@ -34,7 +39,7 @@ DB_CONFIG = {
     'database': 'NetworkAllarm',
 }
 
-VERSION = "3.0"
+VERSION = "3.2"
 
 # ========================
 # 🔧 FUNZIONI DI SUPPORTO
@@ -59,6 +64,18 @@ def scan_port(ip, port):
             return True
     except:
         return False
+
+def perform_port_scan(ip):
+    """Esegue una scansione più approfondita delle porte su un IP attivo."""
+    open_ports = []
+    # Scansiona un range esteso di porte comuni
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_port = {executor.submit(scan_port, ip, port): port for port in EXTENDED_PORTS}
+        for future in future_to_port:
+            port = future_to_port[future]
+            if future.result():
+                open_ports.append(port)
+    return sorted(open_ports)
 
 def is_device_active(ip):
     ping_result = subprocess.run(['ping', '-c', '1', '-W', '1', ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -102,8 +119,20 @@ def get_rete_da_ip(ip):
 
 def init_db():
     try:
+        # Separate database name from config to connect to server first
+        db_name = DB_CONFIG.pop('database', 'NetworkAllarm')
+        
+        # Connect to MySQL server
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor()
+        
+        # Create database if not exists
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+        
+        # Select the database
+        cursor.execute(f"USE {db_name}")
+        
+        # Create table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS scan (
                 Nome VARCHAR(255),
@@ -113,10 +142,29 @@ def init_db():
                 Proprietario VARCHAR(255),
                 Rete VARCHAR(50),
                 VPN BOOLEAN DEFAULT FALSE,
+                Open_Ports TEXT,
                 INDEX idx_ip (IP)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         """)
+        
+        # Check if Open_Ports column exists, if not add it
+        cursor.execute("""
+            SELECT count(*) 
+            FROM information_schema.columns 
+            WHERE table_schema = %s 
+            AND table_name = 'scan' 
+            AND column_name = 'Open_Ports'
+        """, (db_name,))
+        
+        if cursor.fetchone()[0] == 0:
+            print("[i] Aggiunta colonna Open_Ports alla tabella scan...")
+            cursor.execute("ALTER TABLE scan ADD COLUMN Open_Ports TEXT")
+            
         conn.commit()
+        
+        # Restore DB_CONFIG for future use if needed
+        DB_CONFIG['database'] = db_name
+        
         return conn, cursor
     except mysql.connector.Error as err:
         print(f"[❌] Errore DB Init: {err}")
@@ -131,11 +179,13 @@ def record_exists(cursor, mac):
         print(f"[⚠️] Errore lettura DB: {err}")
         return None
 
-def insert_or_update(cursor, nome, ip, mac, rete):
+def insert_or_update(cursor, nome, ip, mac, rete, open_ports=None):
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     if not mac or mac == "00:00:00:00:00:00":
         print(f"[!] MAC non valido per {ip}, salto.")
         return
+
+    ports_str = ",".join(map(str, open_ports)) if open_ports else None
 
     try:
         # Con il lock attivo, possiamo eseguire operazioni in sequenza
@@ -151,23 +201,27 @@ def insert_or_update(cursor, nome, ip, mac, rete):
             res = cursor.fetchone()
             existing_nome = res[0] if res else ""
 
+            query = "UPDATE scan SET IP = %s, Last_Online = %s, Rete = %s"
+            params = [ip, now, rete]
+            
             if existing_nome.strip().lower() in ["", "sconosciuto"] and nome.lower() != "sconosciuto":
-                 cursor.execute("""
-                    UPDATE scan
-                    SET IP = %s, Last_Online = %s, Rete = %s, Nome = %s
-                    WHERE MAC_ADDRESS = %s
-                """, (ip, now, rete, nome, mac))
-            else:
-                cursor.execute("""
-                    UPDATE scan
-                    SET IP = %s, Last_Online = %s, Rete = %s
-                    WHERE MAC_ADDRESS = %s
-                """, (ip, now, rete, mac))
+                query += ", Nome = %s"
+                params.append(nome)
+            
+            if ports_str is not None:
+                query += ", Open_Ports = %s"
+                params.append(ports_str)
+                
+            query += " WHERE MAC_ADDRESS = %s"
+            params.append(mac)
+            
+            cursor.execute(query, tuple(params))
+
         else:
             cursor.execute("""
-                INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete)
-                VALUES (%s, %s, %s, %s, NULL, %s)
-            """, (nome, ip, mac, now, rete))
+                INSERT INTO scan (Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, Open_Ports)
+                VALUES (%s, %s, %s, %s, NULL, %s, %s)
+            """, (nome, ip, mac, now, rete, ports_str))
 
         # Commit immediato per ridurre lock time se autocommit non è attivo
         # cursor.execute("COMMIT") # Non necessario se commit viene fatto alla fine, ma sicuro in thread
@@ -208,7 +262,7 @@ def export_to_csv(conn):
     try:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN
+            SELECT Nome, IP, MAC_ADDRESS, Last_Online, Proprietario, Rete, VPN, Open_Ports
             FROM scan
             ORDER BY INET_ATON(IP)
         """)
@@ -216,7 +270,7 @@ def export_to_csv(conn):
         with open(filename, mode='w', newline='') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerow(['sep=;'])
-            writer.writerow(['Nome', 'IP', 'MAC_ADDRESS', 'Last_Online', 'Proprietario', 'Rete', 'VPN'])
+            writer.writerow(['Nome', 'IP', 'MAC_ADDRESS', 'Last_Online', 'Proprietario', 'Rete', 'VPN', 'Open_Ports'])
             writer.writerows(results)
         print(f"[✓] Esportazione CSV completata: {filename}")
         cursor.close()
@@ -317,12 +371,16 @@ def process_ip(ip, rete_nome, cursor):
             mac = get_mac(ip)
             if mac:
                 nome = get_hostname(ip)
+                open_ports = perform_port_scan(ip)
+                
                 # LOCK QUI PER EVITARE CONFLITTI SUL CURSORE
                 with db_lock:
                     # Verifica se la connessione è ancora attiva (rudimentale)
                     # In produzione meglio un pool, ma qui usiamo il lock
-                    insert_or_update(cursor, nome, ip, mac, rete_nome)
-                print(f"[+] Trovato: {ip} ({mac}) - {nome}")
+                    insert_or_update(cursor, nome, ip, mac, rete_nome, open_ports)
+                
+                ports_display = f" | Porte aperte: {open_ports}" if open_ports else ""
+                print(f"[+] Trovato: {ip} ({mac}) - {nome}{ports_display}")
     except Exception as e:
         print(f"[⚠️] Errore processamento IP {ip}: {e}")
 

@@ -1,6 +1,6 @@
 # NetworkScan
 
-- Versione: 3.1
+- Versione: 3.2
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![Python Version](https://img.shields.io/badge/Python-3.7%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
@@ -12,6 +12,7 @@
 - [NetworkScan](#networkscan)
   - [🚀 Funzionalità principali](#-funzionalità-principali)
     - [Testing](#testing)
+    - [Compatibilità Proxmox / LXC](#compatibilità-proxmox--lxc)
   - [Composizione Database](#composizione-database)
   - [🛠️ Requisiti](#️-requisiti)
     - [Dipendenza dei Pacchetti](#dipendenza-dei-pacchetti)
@@ -52,6 +53,14 @@ NetworkScan è uno script Python avanzato che effettua una scansione periodica d
 
 NetworkScan è stato testato con Raspberry Pi 4 con Ubuntu Server.
 
+### Compatibilità Proxmox / LXC
+
+Se si intende eseguire lo script all'interno di un container LXC su Proxmox, è necessario configurare il container come **Privileged** (Opzione "Unprivileged container" deselezionata in fase di creazione o modificata nel config).
+
+Questo è dovuto al fatto che `scapy` e altri strumenti di rete utilizzati richiedono l'accesso ai raw socket e la capacità di manipolare le interfacce di rete, permessi che normalmente sono bloccati in un container non privilegiato.
+
+Inoltre, assicurarsi che l'interfaccia di rete del container sia configurata correttamente e che possa "vedere" il resto della rete che si intende scansionare.
+
 ## Composizione Database
 
 La tabella 'Scan' è così composta:
@@ -63,6 +72,7 @@ La tabella 'Scan' è così composta:
 - Proprietario : VARCHAR(255)
 - Rete : VARCHAR(50)
 - VPN : Boolean -> Di default è false
+- Open_Ports : TEXT -> Lista delle porte aperte separate da virgola (es. "80,443,8080")
 
 ## 🛠️ Requisiti
 
@@ -239,6 +249,7 @@ Poichè un output imprevisto da comandi di sistema (es. arp, ping) può non esse
 - Versione 2.2.1 : Migliorato lo script di Launch
 - Versione 3.0 : Rielaborazione della Build, ottimizzazzione del codice e miglioramento della gestione del backup e del Database.
 - Versione 3.1 : Miglioramento della gestione del backup.
+- Versione 3.2 : Miglioramento nella gestione del DB.
 
 ## 🧑‍💻 Autore
 
